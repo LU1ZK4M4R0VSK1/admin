@@ -14,7 +14,7 @@ public class Order
     [Required]
     public OrderStatus Status { get; set; } = OrderStatus.EmAndamento;
 
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; set; }
 
     public DateTime? UpdatedAt { get; set; }
 

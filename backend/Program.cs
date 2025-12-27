@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Aero_comidas;
 using Aero_comidas.Data;
 using Aero_comidas.Models;
 using Aero_comidas.Services;
@@ -16,6 +17,12 @@ builder.Services.AddControllers()
     {
         // Previne erros de referência circular ao serializar entidades relacionadas
         options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+        
+        // Configuração de datas para garantir timezone correto
+        options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+        
+        // PropertyNamingPolicy para camelCase (padrão JavaScript)
+        options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
     });
 
 builder.Services.AddEndpointsApiExplorer();
@@ -76,5 +83,14 @@ app.UseHttpsRedirection();
 app.UseCors("AllowAll");
 app.UseAuthorization();
 app.MapControllers();
+
+// ========================================
+// SEED DATABASE
+// ========================================
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    await SeedData.Initialize(context);
+}
 
 app.Run();

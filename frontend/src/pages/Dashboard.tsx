@@ -13,12 +13,30 @@ import {
   UtensilsCrossed
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { dashboardApi, analyticsApi } from "@/lib/services";
+import { formatTime, getRelativeTime } from "@/lib/api";
+import { useToast } from "@/hooks/use-toast";
 
 interface DashboardStats {
   activeOrders: number;
   todayRevenue: number;
   averageOrderTime: number;
   tablesOccupied: number;
+  totalTables: number;
+}
+
+interface RecentOrder {
+  id: number;
+  tableNumber: string;
+  totalAmount: number;
+  status: string;
+  createdAt: string;
+}
+
+interface TopItem {
+  name: string;
+  quantity: number;
+  revenue: number;
 }
 
 export default function Dashboard() {
@@ -26,30 +44,53 @@ export default function Dashboard() {
     activeOrders: 0,
     todayRevenue: 0,
     averageOrderTime: 0,
-    tablesOccupied: 0
+    tablesOccupied: 0,
+    totalTables: 0
   });
+  const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
+  const [topItems, setTopItems] = useState<TopItem[]>([]);
+  const [comparison, setComparison] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
-    // Simular carregamento de dados
-    setTimeout(() => {
-      setStats({
-        activeOrders: 12,
-        todayRevenue: 4850.50,
-        averageOrderTime: 18,
-        tablesOccupied: 8
+    fetchDashboardData();
+  }, []);
+
+  const fetchDashboardData = async () => {
+    try {
+      const [statsData, ordersData, itemsData, comparisonData] = await Promise.all([
+        dashboardApi.getStats(),
+        dashboardApi.getRecentOrders(3),
+        dashboardApi.getTopItems(3),
+        analyticsApi.getComparison()
+      ]);
+      
+      setStats(statsData);
+      setRecentOrders(ordersData);
+      setTopItems(itemsData);
+      setComparison(comparisonData);
+      setLoading(false);
+    } catch (error) {
+      console.error("Erro ao carregar dados do dashboard:", error);
+      toast({
+        title: "Erro ao carregar dashboard",
+        description: error instanceof Error ? error.message : "Erro desconhecido",
+        variant: "destructive"
       });
       setLoading(false);
-    }, 500);
-  }, []);
+    }
+  };
 
   const statCards = [
     {
       title: "Pedidos Ativos",
       value: stats.activeOrders,
       icon: ShoppingBag,
-      trend: "+12%",
-      trendUp: true,
+      trend: comparison?.daily.change.ordersPercentage 
+        ? `${comparison.daily.change.ordersPercentage > 0 ? '+' : ''}${comparison.daily.change.ordersPercentage.toFixed(0)}%`
+        : "+0%",
+      trendUp: comparison?.daily.change.ordersPercentage >= 0,
       color: "from-blue-500 to-blue-600",
       bgColor: "bg-blue-50",
       iconBg: "bg-blue-500"
@@ -58,8 +99,10 @@ export default function Dashboard() {
       title: "Receita Hoje",
       value: `R$ ${stats.todayRevenue.toFixed(2)}`,
       icon: DollarSign,
-      trend: "+8%",
-      trendUp: true,
+      trend: comparison?.daily.change.revenuePercentage
+        ? `${comparison.daily.change.revenuePercentage > 0 ? '+' : ''}${comparison.daily.change.revenuePercentage.toFixed(0)}%`
+        : "+0%",
+      trendUp: comparison?.daily.change.revenuePercentage >= 0,
       color: "from-primary to-primary/80",
       bgColor: "bg-primary/5",
       iconBg: "bg-gradient-primary"
@@ -76,9 +119,9 @@ export default function Dashboard() {
     },
     {
       title: "Mesas Ocupadas",
-      value: `${stats.tablesOccupied}/12`,
+      value: `${stats.tablesOccupied}/${stats.totalTables}`,
       icon: Users,
-      trend: "+2",
+      trend: `${stats.totalTables} total`,
       trendUp: true,
       color: "from-violet-500 to-violet-600",
       bgColor: "bg-violet-50",
@@ -225,33 +268,34 @@ export default function Dashboard() {
             </Link>
           </div>
           <div className="space-y-4">
-            {[
-              { table: 5, items: 3, status: "Preparando", time: "2 min" },
-              { table: 3, items: 2, status: "Pendente", time: "5 min" },
-              { table: 8, items: 4, status: "Pronto", time: "12 min" },
-            ].map((order, index) => (
-              <div key={index} className="flex items-center justify-between p-4 rounded-xl bg-muted/50 hover:bg-muted transition-colors">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-                    <ChefHat className="w-5 h-5 text-primary" />
+            {recentOrders.length === 0 ? (
+              <p className="text-center text-muted-foreground py-8">Nenhum pedido recente</p>
+            ) : (
+              recentOrders.map((order, index) => (
+                <div key={order.id} className="flex items-center justify-between p-4 rounded-xl bg-muted/50 hover:bg-muted transition-colors">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                      <ChefHat className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-foreground">Mesa {order.tableNumber}</p>
+                      <p className="text-sm text-muted-foreground">R$ {order.totalAmount.toFixed(2)}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-medium text-foreground">Mesa {order.table}</p>
-                    <p className="text-sm text-muted-foreground">{order.items} itens</p>
+                  <div className="text-right">
+                    <span className={`inline-block px-2.5 py-1 rounded-lg text-xs font-semibold ${
+                      order.status.toLowerCase() === "entregue" ? "bg-primary/10 text-primary" :
+                      order.status.toLowerCase() === "em andamento" ? "bg-blue-50 text-blue-600" :
+                      order.status.toLowerCase() === "pago" ? "bg-green-50 text-green-600" :
+                      "bg-amber-50 text-amber-600"
+                    }`}>
+                      {order.status}
+                    </span>
+                    <p className="text-xs text-muted-foreground mt-1">{getRelativeTime(order.createdAt)}</p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <span className={`inline-block px-2.5 py-1 rounded-lg text-xs font-semibold ${
-                    order.status === "Pronto" ? "bg-primary/10 text-primary" :
-                    order.status === "Preparando" ? "bg-blue-50 text-blue-600" :
-                    "bg-amber-50 text-amber-600"
-                  }`}>
-                    {order.status}
-                  </span>
-                  <p className="text-xs text-muted-foreground mt-1">há {order.time}</p>
-                </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </motion.div>
 
@@ -268,24 +312,24 @@ export default function Dashboard() {
             </Link>
           </div>
           <div className="space-y-4">
-            {[
-              { name: "Hambúrguer Clássico", sold: 45, revenue: "R$ 1.165,50" },
-              { name: "Pizza Margherita", sold: 32, revenue: "R$ 1.280,00" },
-              { name: "Batata Frita", sold: 28, revenue: "R$ 420,00" },
-            ].map((item, index) => (
-              <div key={index} className="flex items-center justify-between p-4 rounded-xl bg-muted/50 hover:bg-muted transition-colors">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center font-bold text-primary">
-                    {index + 1}
+            {topItems.length === 0 ? (
+              <p className="text-center text-muted-foreground py-8">Nenhum dado disponível</p>
+            ) : (
+              topItems.map((item, index) => (
+                <div key={index} className="flex items-center justify-between p-4 rounded-xl bg-muted/50 hover:bg-muted transition-colors">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center font-bold text-primary">
+                      {index + 1}
+                    </div>
+                    <div>
+                      <p className="font-medium text-foreground">{item.name}</p>
+                      <p className="text-sm text-muted-foreground">{item.quantity} vendidos</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-medium text-foreground">{item.name}</p>
-                    <p className="text-sm text-muted-foreground">{item.sold} vendidos</p>
-                  </div>
+                  <p className="font-semibold text-primary">R$ {item.revenue.toFixed(2)}</p>
                 </div>
-                <p className="font-semibold text-primary">{item.revenue}</p>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </motion.div>
       </div>

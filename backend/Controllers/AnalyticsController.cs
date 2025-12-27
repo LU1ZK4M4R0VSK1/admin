@@ -193,12 +193,11 @@ public class AnalyticsController : ControllerBase
             var averageTicket = totalOrders > 0 ? totalRevenue / totalOrders : 0;
 
             var dailyRevenue = orders
-                .GroupBy(o => o.CreatedAt.Date)
-                .Select(g => new
+                .Select(o => new
                 {
-                    date = g.Key.ToString("yyyy-MM-dd"),
-                    revenue = Math.Round(g.Sum(o => o.TotalAmount), 2),
-                    orders = g.Count()
+                    date = o.CreatedAt.ToString("o"),
+                    revenue = Math.Round(o.TotalAmount, 2),
+                    orderId = o.Id
                 })
                 .OrderBy(x => x.date)
                 .ToList();

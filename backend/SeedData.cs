@@ -22,11 +22,11 @@ public static class SeedData
         // Adiciona itens do cardápio
         var menuItems = new[]
         {
-            new MenuItem { Name = "Hambúrguer Clássico", Description = "Pão, carne, queijo, alface e tomate", Price = 25.90m, Category = "Lanches", IsAvailable = true },
-            new MenuItem { Name = "Pizza Margherita", Description = "Molho de tomate, mussarela e manjericão", Price = 45.00m, Category = "Pizzas", IsAvailable = true },
-            new MenuItem { Name = "Refrigerante Lata", Description = "Coca-Cola, Guaraná ou Sprite", Price = 5.00m, Category = "Bebidas", IsAvailable = true },
-            new MenuItem { Name = "Batata Frita", Description = "Porção de batatas fritas crocantes", Price = 15.00m, Category = "Porções", IsAvailable = true },
-            new MenuItem { Name = "Salada Caesar", Description = "Alface, frango, croutons e molho caesar", Price = 28.00m, Category = "Saladas", IsAvailable = true }
+            new MenuItem { Name = "Hambúrguer Clássico", Description = "Pão, carne, queijo, alface e tomate", Price = 25.90m, Category = "Lanches", IsAvailable = true, CreatedAt = DateTime.UtcNow },
+            new MenuItem { Name = "Pizza Margherita", Description = "Molho de tomate, mussarela e manjericão", Price = 45.00m, Category = "Pizzas", IsAvailable = true, CreatedAt = DateTime.UtcNow },
+            new MenuItem { Name = "Refrigerante Lata", Description = "Coca-Cola, Guaraná ou Sprite", Price = 5.00m, Category = "Bebidas", IsAvailable = true, CreatedAt = DateTime.UtcNow },
+            new MenuItem { Name = "Batata Frita", Description = "Porção de batatas fritas crocantes", Price = 15.00m, Category = "Porções", IsAvailable = true, CreatedAt = DateTime.UtcNow },
+            new MenuItem { Name = "Salada Caesar", Description = "Alface, frango, croutons e molho caesar", Price = 28.00m, Category = "Saladas", IsAvailable = true, CreatedAt = DateTime.UtcNow }
         };
 
         await context.MenuItems.AddRangeAsync(menuItems);
@@ -37,11 +37,11 @@ public static class SeedData
         // Adiciona mesas
         var tables = new[]
         {
-            new Table { TableNumber = 1, Capacity = 4, Status = TableStatus.Disponivel },
-            new Table { TableNumber = 2, Capacity = 2, Status = TableStatus.Disponivel },
-            new Table { TableNumber = 3, Capacity = 6, Status = TableStatus.Disponivel },
-            new Table { TableNumber = 4, Capacity = 4, Status = TableStatus.Disponivel },
-            new Table { TableNumber = 5, Capacity = 2, Status = TableStatus.Disponivel }
+            new Table { TableNumber = 1, Capacity = 4, Status = TableStatus.Disponivel, CreatedAt = DateTime.UtcNow },
+            new Table { TableNumber = 2, Capacity = 2, Status = TableStatus.Disponivel, CreatedAt = DateTime.UtcNow },
+            new Table { TableNumber = 3, Capacity = 6, Status = TableStatus.Disponivel, CreatedAt = DateTime.UtcNow },
+            new Table { TableNumber = 4, Capacity = 4, Status = TableStatus.Disponivel, CreatedAt = DateTime.UtcNow },
+            new Table { TableNumber = 5, Capacity = 2, Status = TableStatus.Disponivel, CreatedAt = DateTime.UtcNow }
         };
 
         await context.Tables.AddRangeAsync(tables);
@@ -56,7 +56,7 @@ public static class SeedData
             {
                 TableId = 1,
                 Status = OrderStatus.Entregue,
-                CreatedAt = DateTime.Now.AddHours(-2),
+                CreatedAt = DateTime.UtcNow.AddHours(-2),
                 TotalAmount = 70.90m,
                 Items = new List<OrderItem>
                 {
@@ -69,7 +69,7 @@ public static class SeedData
             {
                 TableId = 2,
                 Status = OrderStatus.EmAndamento,
-                CreatedAt = DateTime.Now.AddMinutes(-30),
+                CreatedAt = DateTime.UtcNow.AddMinutes(-30),
                 TotalAmount = 45.00m,
                 Items = new List<OrderItem>
                 {
@@ -80,7 +80,7 @@ public static class SeedData
             {
                 TableId = 3,
                 Status = OrderStatus.Entregue,
-                CreatedAt = DateTime.Now.AddHours(-1),
+                CreatedAt = DateTime.UtcNow.AddHours(-1),
                 TotalAmount = 71.00m,
                 Items = new List<OrderItem>
                 {

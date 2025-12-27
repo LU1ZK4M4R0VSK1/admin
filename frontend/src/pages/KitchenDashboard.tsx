@@ -1,93 +1,109 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { ChefHat, Clock, CheckCircle, XCircle, AlertCircle, Timer } from "lucide-react";
-
-interface Order {
-  id: number;
-  tableId: number;
-  status: string;
-  items: Array<{
-    id: number;
-    productName: string;
-    quantity: number;
-    notes?: string;
-  }>;
-  createdAt: string;
-}
+import { ChefHat, Clock, CheckCircle, XCircle, AlertCircle, Pencil, Trash2 } from "lucide-react";
+import { ordersApi } from "@/lib/services";
+import { Order, OrderStatus, OrderStatusLabels } from "@/lib/types";
+import { formatTime, getRelativeTime } from "@/lib/api";
+import { useToast } from "@/hooks/use-toast";
 
 export default function KitchenDashboard() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState<number | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     fetchOrders();
-    // Atualizar a cada 10 segundos
     const interval = setInterval(fetchOrders, 10000);
     return () => clearInterval(interval);
-  }, []);
+  }, [filter]);
 
   const fetchOrders = async () => {
     try {
-      // Simular dados para desenvolvimento
-      setOrders([
-        {
-          id: 1,
-          tableId: 5,
-          status: "Pendente",
-          createdAt: new Date().toISOString(),
-          items: [
-            { id: 1, productName: "Hambúrguer Clássico", quantity: 2 },
-            { id: 2, productName: "Batata Frita", quantity: 1, notes: "Sem sal" }
-          ]
-        },
-        {
-          id: 2,
-          tableId: 3,
-          status: "Preparando",
-          createdAt: new Date().toISOString(),
-          items: [
-            { id: 3, productName: "Pizza Margherita", quantity: 1 }
-          ]
-        }
-      ]);
+      const data = await ordersApi.getAll(filter !== null ? { status: filter } : undefined);
+      setOrders(data);
       setLoading(false);
     } catch (error) {
-      console.error("Erro ao buscar pedidos:", error);
+      toast({
+        title: "Erro ao carregar pedidos",
+        description: error instanceof Error ? error.message : "Erro desconhecido",
+        variant: "destructive",
+      });
       setLoading(false);
     }
   };
 
-  const updateOrderStatus = async (orderId: number, newStatus: string) => {
-    console.log(`Atualizando pedido ${orderId} para ${newStatus}`);
-    // Implementar chamada à API
-    await fetchOrders();
+  const updateOrderStatus = async (orderId: number, newStatus: number) => {
+    try {
+      await ordersApi.changeStatus(orderId, {
+        newStatus,
+        changedBy: "Sistema",
+        notes: `Status alterado para ${OrderStatusLabels[newStatus]}`,
+      });
+      toast({
+        title: "Status atualizado",
+        description: `Pedido #${orderId} atualizado com sucesso`,
+      });
+      fetchOrders();
+    } catch (error) {
+      toast({
+        title: "Erro ao atualizar status",
+        description: error instanceof Error ? error.message : "Erro desconhecido",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const deleteOrder = async (orderId: number) => {
+    if (!confirm("Deseja realmente excluir este pedido?")) return;
+    try {
+      await ordersApi.delete(orderId);
+      toast({
+        title: "Pedido excluído",
+        description: `Pedido #${orderId} foi removido`,
+      });
+      fetchOrders();
+    } catch (error) {
+      toast({
+        title: "Erro ao excluir pedido",
+        description: error instanceof Error ? error.message : "Erro desconhecido",
+        variant: "destructive",
+      });
+    }
   };
 
   const getStatusConfig = (status: string) => {
-    switch (status) {
-      case "Pendente":
+    switch (status.toLowerCase()) {
+      case "em andamento":
+      case "emandamento":
         return {
           color: "bg-amber-50 text-amber-700 border-amber-200",
           icon: AlertCircle,
-          iconColor: "text-amber-500"
+          iconColor: "text-amber-500",
         };
-      case "Preparando":
-        return {
-          color: "bg-blue-50 text-blue-700 border-blue-200",
-          icon: Timer,
-          iconColor: "text-blue-500"
-        };
-      case "Pronto":
+      case "entregue":
         return {
           color: "bg-primary/10 text-primary border-primary/20",
           icon: CheckCircle,
-          iconColor: "text-primary"
+          iconColor: "text-primary",
+        };
+      case "pago":
+        return {
+          color: "bg-green-50 text-green-700 border-green-200",
+          icon: CheckCircle,
+          iconColor: "text-green-500",
+        };
+      case "cancelado":
+        return {
+          color: "bg-red-50 text-red-700 border-red-200",
+          icon: XCircle,
+          iconColor: "text-red-500",
         };
       default:
         return {
           color: "bg-muted text-muted-foreground border-border",
           icon: AlertCircle,
-          iconColor: "text-muted-foreground"
+          iconColor: "text-muted-foreground",
         };
     }
   };
@@ -95,144 +111,72 @@ export default function KitchenDashboard() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-96">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-primary/20 rounded-full animate-spin border-t-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Carregando pedidos...</p>
-        </div>
+        <p className="text-muted-foreground">Carregando pedidos...</p>
       </div>
     );
   }
 
   return (
     <div className="space-y-8">
-      {/* Header */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
+        className="flex justify-between"
       >
-        <div className="flex items-center gap-4">
-          <div className="w-14 h-14 bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl flex items-center justify-center shadow-lg">
-            <ChefHat className="w-7 h-7 text-primary-foreground" />
-          </div>
-          <div>
-            <h1 className="text-2xl lg:text-3xl font-display font-bold text-foreground">Cozinha</h1>
-            <p className="text-muted-foreground">Gerenciar pedidos em tempo real</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 px-4 py-2 bg-amber-50 rounded-xl border border-amber-200">
-            <AlertCircle className="w-4 h-4 text-amber-600" />
-            <span className="text-sm font-medium text-amber-700">
-              {orders.filter(o => o.status === "Pendente").length} pendentes
-            </span>
-          </div>
-          <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 rounded-xl border border-blue-200">
-            <Timer className="w-4 h-4 text-blue-600" />
-            <span className="text-sm font-medium text-blue-700">
-              {orders.filter(o => o.status === "Preparando").length} preparando
-            </span>
-          </div>
+        <h1 className="text-3xl font-bold">Pedidos</h1>
+        <div className="flex gap-2">
+          <button onClick={() => setFilter(null)}>Todos</button>
+          <button onClick={() => setFilter(OrderStatus.EmAndamento)}>Em Andamento</button>
+          <button onClick={() => setFilter(OrderStatus.Entregue)}>Entregue</button>
+          <button onClick={() => setFilter(OrderStatus.Pago)}>Pago</button>
         </div>
       </motion.div>
 
-      {/* Orders Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         {orders.length === 0 ? (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="col-span-full"
-          >
-            <div className="card-premium p-12 text-center">
-              <div className="w-20 h-20 bg-muted rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <ChefHat className="w-10 h-10 text-muted-foreground" />
-              </div>
-              <h3 className="text-xl font-display font-semibold text-foreground mb-2">Nenhum pedido ativo</h3>
-              <p className="text-muted-foreground">Nenhum pedido ativo no momento</p>
-            </div>
-          </motion.div>
+          <p>Nenhum pedido encontrado</p>
         ) : (
           orders.map((order, index) => {
             const statusConfig = getStatusConfig(order.status);
             const StatusIcon = statusConfig.icon;
+
             return (
-              <motion.div
-                key={order.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                className="card-premium p-6 group"
-              >
-                {/* Order Header */}
-                <div className="flex items-center justify-between mb-5">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
-                      <span className="font-display font-bold text-primary text-lg">{order.tableId}</span>
-                    </div>
-                    <div>
-                      <p className="font-display font-bold text-foreground">Mesa {order.tableId}</p>
-                      <div className="flex items-center gap-1.5 text-muted-foreground">
-                        <Clock className="w-3.5 h-3.5" />
-                        <span className="text-sm">
-                          {new Date(order.createdAt).toLocaleTimeString('pt-BR', {
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })}
-                        </span>
-                      </div>
-                    </div>
+              <motion.div key={order.id} className="card-premium p-6">
+                <div className="flex justify-between mb-4">
+                  <div>
+                    <p>Mesa {order.tableNumber}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {formatTime(order.createdAt)} • {getRelativeTime(order.createdAt)}
+                    </p>
                   </div>
-                  <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-semibold border ${statusConfig.color}`}>
-                    <StatusIcon className={`w-4 h-4 ${statusConfig.iconColor}`} />
-                    {order.status}
+                  <div className={statusConfig.color}>
+                    <StatusIcon className={statusConfig.iconColor} /> {order.status}
                   </div>
                 </div>
 
-                {/* Order Items */}
-                <div className="space-y-2.5 mb-5">
-                  {order.items.map((item) => (
-                    <div key={item.id} className="flex items-start gap-3 p-3 bg-muted/50 rounded-xl">
-                      <span className="flex-shrink-0 w-7 h-7 bg-primary/10 rounded-lg flex items-center justify-center font-bold text-primary text-sm">
-                        {item.quantity}x
-                      </span>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-foreground truncate">{item.productName}</p>
-                        {item.notes && (
-                          <p className="text-sm text-amber-600 mt-0.5 flex items-center gap-1">
-                            <AlertCircle className="w-3 h-3" />
-                            {item.notes}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+                {order.items.map((item) => (
+                  <div key={item.id}>
+                    {item.quantity}x {item.productName}
+                  </div>
+                ))}
+
+                <div className="mt-4 font-bold">
+                  Total: R$ {order.totalAmount.toFixed(2)}
                 </div>
 
-                {/* Actions */}
-                <div className="flex gap-2">
-                  {order.status === "Pendente" && (
-                    <button
-                      onClick={() => updateOrderStatus(order.id, "Preparando")}
-                      className="flex-1 bg-blue-500 hover:bg-blue-600 text-primary-foreground py-3 rounded-xl font-semibold transition-all duration-200 hover:shadow-lg"
-                    >
-                      Preparar
+                <div className="flex gap-2 mt-4">
+                  {order.status.toLowerCase() === "em andamento" && (
+                    <button onClick={() => updateOrderStatus(order.id, OrderStatus.Entregue)}>
+                      Entregue
                     </button>
                   )}
-                  {order.status === "Preparando" && (
-                    <button
-                      onClick={() => updateOrderStatus(order.id, "Pronto")}
-                      className="flex-1 btn-primary py-3 flex items-center justify-center gap-2"
-                    >
-                      <CheckCircle className="w-5 h-5" />
-                      Finalizar
+                  {order.status.toLowerCase() === "entregue" && (
+                    <button onClick={() => updateOrderStatus(order.id, OrderStatus.Pago)}>
+                      Pago
                     </button>
                   )}
-                  <button
-                    onClick={() => updateOrderStatus(order.id, "Cancelado")}
-                    className="w-12 h-12 flex items-center justify-center rounded-xl border-2 border-red-200 text-red-500 hover:bg-red-50 hover:border-red-300 transition-all"
-                  >
-                    <XCircle className="w-5 h-5" />
+                  <button onClick={() => deleteOrder(order.id)}>
+                    <Trash2 size={16} />
                   </button>
                 </div>
               </motion.div>

@@ -1,24 +1,18 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { UtensilsCrossed, Plus, Pencil, Trash2, DollarSign, Search, Filter, Check, X } from "lucide-react";
-
-interface MenuItem {
-  id: number;
-  name: string;
-  description: string;
-  price: number;
-  category: string;
-  isAvailable: boolean;
-  imageUrl?: string;
-}
+import { UtensilsCrossed, Plus, Pencil, Trash2, Search, Check, X } from "lucide-react";
+import { menuItemsApi } from "@/lib/services";
+import { MenuItem } from "@/lib/types";
+import { useToast } from "@/hooks/use-toast";
 
 export default function MenuManagement() {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState("Todos");
   const [searchQuery, setSearchQuery] = useState("");
+  const { toast } = useToast();
 
-  const categories = ["Todos", "Entradas", "Pratos Principais", "Sobremesas", "Bebidas"];
+  const categories = ["Todos", "Entradas", "Pratos Principais", "Pizzas", "Massas", "Saladas", "Sobremesas", "Bebidas", "Vinhos"];
 
   useEffect(() => {
     fetchMenuItems();
@@ -26,44 +20,62 @@ export default function MenuManagement() {
 
   const fetchMenuItems = async () => {
     try {
-      // Simular dados
-      setMenuItems([
-        {
-          id: 1,
-          name: "Hambúrguer Clássico",
-          description: "Hambúrguer com queijo, alface e tomate",
-          price: 25.90,
-          category: "Pratos Principais",
-          isAvailable: true
-        },
-        {
-          id: 2,
-          name: "Batata Frita",
-          description: "Porção de batatas crocantes",
-          price: 15.00,
-          category: "Entradas",
-          isAvailable: true
-        },
-        {
-          id: 3,
-          name: "Pudim",
-          description: "Pudim de leite caseiro",
-          price: 12.00,
-          category: "Sobremesas",
-          isAvailable: false
-        }
-      ]);
+      const data = await menuItemsApi.getAll();
+      setMenuItems(data);
       setLoading(false);
     } catch (error) {
       console.error("Erro ao buscar itens do menu:", error);
+      toast({
+        title: "Erro ao carregar cardápio",
+        description: error instanceof Error ? error.message : "Erro desconhecido",
+        variant: "destructive"
+      });
       setLoading(false);
+    }
+  };
+
+  const toggleAvailability = async (id: number) => {
+    try {
+      await menuItemsApi.toggleAvailability(id);
+      toast({
+        title: "Disponibilidade atualizada",
+        description: "Status do item foi alterado"
+      });
+      await fetchMenuItems();
+    } catch (error) {
+      console.error("Erro ao alterar disponibilidade:", error);
+      toast({
+        title: "Erro ao atualizar item",
+        description: error instanceof Error ? error.message : "Erro desconhecido",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const deleteItem = async (id: number) => {
+    if (!confirm("Deseja realmente excluir este item?")) return;
+    
+    try {
+      await menuItemsApi.delete(id);
+      toast({
+        title: "Item excluído",
+        description: "O item foi removido do cardápio"
+      });
+      await fetchMenuItems();
+    } catch (error) {
+      console.error("Erro ao excluir item:", error);
+      toast({
+        title: "Erro ao excluir item",
+        description: error instanceof Error ? error.message : "Erro desconhecido",
+        variant: "destructive"
+      });
     }
   };
 
   const filteredItems = menuItems.filter(item => {
     const matchesCategory = selectedCategory === "Todos" || item.category === selectedCategory;
     const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         item.description.toLowerCase().includes(searchQuery.toLowerCase());
+                         (item.description && item.description.toLowerCase().includes(searchQuery.toLowerCase()));
     return matchesCategory && matchesSearch;
   });
 
@@ -166,17 +178,33 @@ export default function MenuManagement() {
                 </span>
               </div>
               <div className="flex gap-1 ml-2">
-                <button className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-muted transition-colors">
+                <button 
+                  className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-muted transition-colors"
+                  onClick={() => {/* TODO: Implementar edição */}}
+                  title="Editar item"
+                >
                   <Pencil className="w-4 h-4 text-muted-foreground hover:text-foreground" />
                 </button>
-                <button className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-red-50 transition-colors">
+                <button 
+                  className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-red-50 transition-colors"
+                  onClick={() => deleteItem(item.id)}
+                  title="Excluir item"
+                >
                   <Trash2 className="w-4 h-4 text-muted-foreground hover:text-red-500" />
                 </button>
               </div>
             </div>
 
             {/* Description */}
-            <p className="text-muted-foreground text-sm mb-5 line-clamp-2">{item.description}</p>
+            <p className="text-muted-foreground text-sm mb-5 line-clamp-2">{item.description || "Sem descrição"}</p>
+
+            {/* Ingredients */}
+            {item.ingredients && (
+              <div className="mb-4">
+                <p className="text-xs font-semibold text-muted-foreground mb-1">Ingredientes:</p>
+                <p className="text-xs text-muted-foreground line-clamp-2">{item.ingredients}</p>
+              </div>
+            )}
 
             {/* Price and Status */}
             <div className="flex items-center justify-between pt-4 border-t border-border">
@@ -186,6 +214,7 @@ export default function MenuManagement() {
                 </span>
               </div>
               <button
+                onClick={() => toggleAvailability(item.id)}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-semibold transition-all ${
                   item.isAvailable
                     ? "bg-primary/10 text-primary hover:bg-primary/20"

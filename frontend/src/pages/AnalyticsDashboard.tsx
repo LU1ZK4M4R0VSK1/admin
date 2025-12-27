@@ -9,13 +9,9 @@ import {
   TrendingUp,
   DollarSign,
   ShoppingCart,
-  Users,
   Sparkles,
-  Calendar,
   ArrowUp,
   ArrowDown,
-  Package,
-  Download
 } from 'lucide-react';
 import {
   AreaChart,
@@ -28,28 +24,15 @@ import {
   BarChart,
   Bar
 } from 'recharts';
-
-interface DashboardMetrics {
-  totalRevenue: number;
-  totalOrders: number;
-  averageTicket: number;
-  topSellingItems: Array<{
-    name: string;
-    quantity: number;
-    revenue: number;
-  }>;
-  revenueByPeriod: Array<{
-    date: string;
-    revenue: number;
-  }>;
-}
+import { analyticsApi } from '@/lib/services';
+import { useToast } from '@/hooks/use-toast';
 
 export default function AnalyticsDashboard() {
-  const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
+  const [dashboardData, setDashboardData] = useState<any>(null);
+  const [topItems, setTopItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [period, setPeriod] = useState('today');
-
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+  const [period, setPeriod] = useState<'day' | 'week' | 'month'>('day');
+  const { toast } = useToast();
 
   useEffect(() => {
     fetchMetrics();
@@ -57,32 +40,44 @@ export default function AnalyticsDashboard() {
 
   const fetchMetrics = async () => {
     try {
-      // Simulated data for demonstration
-      setMetrics({
-        totalRevenue: 15840.50,
-        totalOrders: 124,
-        averageTicket: 127.75,
-        topSellingItems: [
-          { name: "Hambúrguer Clássico", quantity: 45, revenue: 1165.50 },
-          { name: "Pizza Margherita", quantity: 32, revenue: 1280.00 },
-          { name: "Batata Frita", quantity: 28, revenue: 420.00 },
-          { name: "Refrigerante", quantity: 67, revenue: 536.00 },
-          { name: "Pudim", quantity: 18, revenue: 216.00 },
-        ],
-        revenueByPeriod: [
-          { date: "2024-01-01", revenue: 2450 },
-          { date: "2024-01-02", revenue: 3200 },
-          { date: "2024-01-03", revenue: 2800 },
-          { date: "2024-01-04", revenue: 3500 },
-          { date: "2024-01-05", revenue: 4100 },
-          { date: "2024-01-06", revenue: 3800 },
-          { date: "2024-01-07", revenue: 4500 },
-        ]
-      });
+      setLoading(true);
+      const startDate = getStartDate(period);
+      const endDate = new Date().toISOString().split('T')[0];
+      
+      const [dashboard, items] = await Promise.all([
+        analyticsApi.getDashboard({ startDate, endDate }),
+        analyticsApi.getTopSellingItems({ startDate, endDate, limit: 5 })
+      ]);
+      
+      setDashboardData(dashboard);
+      setTopItems(items);
+      setLoading(false);
     } catch (err) {
       console.error('Erro:', err);
-    } finally {
+      toast({
+        title: "Erro ao carregar relatórios",
+        description: err instanceof Error ? err.message : "Erro desconhecido",
+        variant: "destructive"
+      });
       setLoading(false);
+    }
+  };
+
+  const getStartDate = (period: string): string => {
+    const now = new Date();
+    switch (period) {
+      case 'day':
+        return now.toISOString().split('T')[0];
+      case 'week':
+        const weekAgo = new Date(now);
+        weekAgo.setDate(now.getDate() - 7);
+        return weekAgo.toISOString().split('T')[0];
+      case 'month':
+        const monthAgo = new Date(now);
+        monthAgo.setMonth(now.getMonth() - 1);
+        return monthAgo.toISOString().split('T')[0];
+      default:
+        return now.toISOString().split('T')[0];
     }
   };
 
@@ -93,7 +88,7 @@ export default function AnalyticsDashboard() {
     }).format(value);
   };
 
-  if (loading) {
+  if (loading || !dashboardData) {
     return (
       <div className="flex items-center justify-center min-h-[70vh]">
         <div className="text-center">
@@ -106,6 +101,19 @@ export default function AnalyticsDashboard() {
       </div>
     );
   }
+
+  const { summary, dailyRevenue } = dashboardData;
+
+  const revenueByTime = dailyRevenue && dailyRevenue.length > 0
+    ? dailyRevenue.map((item: any) => ({
+        time: new Date(item.date).toLocaleTimeString('pt-BR', {
+          hour: '2-digit',
+          minute: '2-digit',
+          timeZone: 'America/Sao_Paulo'
+        }),
+        total: item.revenue
+      })).sort((a: any, b: any) => a.time.localeCompare(b.time))
+    : [];
 
   return (
     <div className="space-y-8">
@@ -126,13 +134,13 @@ export default function AnalyticsDashboard() {
         </div>
         <div className="flex gap-2">
           {[
-            { value: 'today', label: 'Hoje' },
+            { value: 'day', label: 'Hoje' },
             { value: 'week', label: 'Semana' },
             { value: 'month', label: 'Mês' }
           ].map(({ value, label }) => (
             <button
               key={value}
-              onClick={() => setPeriod(value)}
+              onClick={() => setPeriod(value as any)}
               className={`px-4 py-2.5 rounded-xl font-medium transition-all duration-200 ${
                 period === value
                   ? 'btn-primary'
@@ -150,19 +158,19 @@ export default function AnalyticsDashboard() {
         {[
           { 
             label: "Faturamento", 
-            value: formatCurrency(metrics?.totalRevenue || 0), 
+            value: formatCurrency(summary.totalRevenue || 0), 
             trend: "+12%", 
             icon: DollarSign 
           },
           { 
             label: "Total de Pedidos", 
-            value: metrics?.totalOrders || 0, 
+            value: summary.totalOrders || 0, 
             trend: "+8%", 
             icon: ShoppingCart 
           },
           { 
             label: "Ticket Médio", 
-            value: formatCurrency(metrics?.averageTicket || 0), 
+            value: formatCurrency(summary.averageTicket || 0), 
             trend: "+5%", 
             icon: TrendingUp 
           }
@@ -198,152 +206,123 @@ export default function AnalyticsDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Revenue Chart */}
         <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
           className="card-premium p-6"
         >
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg font-display font-bold text-foreground">Faturamento por Dia</h2>
-            <Calendar className="w-5 h-5 text-muted-foreground" />
-          </div>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={metrics?.revenueByPeriod || []}>
-                <defs>
-                  <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="hsl(160, 84%, 39%)" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="hsl(160, 84%, 39%)" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis 
-                  dataKey="date" 
-                  stroke="hsl(var(--muted-foreground))"
-                  tickFormatter={(value) => new Date(value).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}
-                  fontSize={12}
-                />
-                <YAxis 
-                  stroke="hsl(var(--muted-foreground))"
-                  tickFormatter={(value) => `R$${value/1000}k`}
-                  fontSize={12}
-                />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: 'hsl(var(--card))',
-                    border: '1px solid hsl(var(--border))',
-                    borderRadius: '12px',
-                    boxShadow: '0 8px 30px rgba(0,0,0,0.08)'
-                  }}
-                  formatter={(value: number) => [formatCurrency(value), 'Receita']}
-                  labelFormatter={(value) => new Date(value).toLocaleDateString('pt-BR')}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="revenue"
-                  stroke="hsl(160, 84%, 39%)"
-                  strokeWidth={3}
-                  fillOpacity={1}
-                  fill="url(#colorRevenue)"
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
+          <h2 className="text-xl font-display font-bold text-foreground mb-6">Faturamento por Dia</h2>
+          <ResponsiveContainer width="100%" height={300}>
+            <AreaChart data={revenueByTime}>
+              <defs>
+                <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="rgb(34, 197, 94)" stopOpacity={0.3}/>
+                  <stop offset="95%" stopColor="rgb(34, 197, 94)" stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+              <XAxis 
+                dataKey="time" 
+                stroke="#6b7280"
+                style={{ fontSize: '12px' }}
+              />
+              <YAxis 
+                stroke="#6b7280"
+                style={{ fontSize: '12px' }}
+                tickFormatter={(value) => `R$ ${value}`}
+              />
+              <Tooltip 
+                contentStyle={{ 
+                  backgroundColor: 'white',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: '8px'
+                }}
+                formatter={(value: any) => formatCurrency(value)}
+                labelFormatter={(label) => `Horário: ${label}`}
+              />
+              <Area 
+                type="monotone" 
+                dataKey="total" 
+                stroke="rgb(34, 197, 94)" 
+                strokeWidth={2}
+                fill="url(#colorRevenue)" 
+              />
+            </AreaChart>
+          </ResponsiveContainer>
         </motion.div>
 
-        {/* Top Selling Items */}
+        {/* Top Items Chart */}
         <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
           className="card-premium p-6"
         >
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg font-display font-bold text-foreground">Produtos Mais Vendidos</h2>
-            <Package className="w-5 h-5 text-muted-foreground" />
-          </div>
-          <div className="space-y-4">
-            {metrics?.topSellingItems?.slice(0, 5).map((item, index) => (
-              <div key={index} className="flex items-center gap-4">
-                <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-gradient-primary flex items-center justify-center text-primary-foreground font-bold shadow-lg">
-                  {index + 1}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between mb-1.5">
-                    <p className="font-medium text-foreground truncate">{item.name}</p>
-                    <span className="text-sm font-semibold text-primary ml-2 flex-shrink-0">
-                      {formatCurrency(item.revenue)}
-                    </span>
-                  </div>
-                  <div className="w-full bg-muted rounded-full h-2">
-                    <div
-                      className="bg-gradient-primary h-2 rounded-full transition-all duration-500"
-                      style={{
-                        width: `${(item.revenue / (metrics.topSellingItems[0]?.revenue || 1)) * 100}%`
-                      }}
-                    />
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1">{item.quantity} vendidos</p>
-                </div>
-              </div>
-            )) || (
-              <div className="text-center py-8 text-muted-foreground">
-                <Package className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                <p>Nenhum produto vendido ainda</p>
-              </div>
-            )}
-          </div>
+          <h2 className="text-xl font-display font-bold text-foreground mb-6">Top 5 Produtos</h2>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={topItems.map(item => ({ 
+              name: item.productName.length > 15 ? item.productName.substring(0, 15) + '...' : item.productName,
+              quantidade: item.totalQuantity 
+            }))}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+              <XAxis 
+                dataKey="name" 
+                stroke="#6b7280"
+                style={{ fontSize: '11px' }}
+                angle={-45}
+                textAnchor="end"
+                height={80}
+              />
+              <YAxis stroke="#6b7280" style={{ fontSize: '12px' }} />
+              <Tooltip 
+                contentStyle={{ 
+                  backgroundColor: 'white',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: '8px'
+                }}
+              />
+              <Bar dataKey="quantidade" fill="rgb(34, 197, 94)" radius={[8, 8, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
         </motion.div>
       </div>
 
-      {/* Additional Stats */}
+      {/* Top Selling Items Table */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.5 }}
-        className="grid grid-cols-2 lg:grid-cols-4 gap-4"
+        className="card-premium p-6"
       >
-        {[
-          { label: "Clientes Atendidos", value: metrics?.totalOrders || 0, icon: Users },
-          { label: "Itens Vendidos", value: metrics?.topSellingItems?.reduce((sum, item) => sum + item.quantity, 0) || 0, icon: ShoppingCart },
-          { label: "Crescimento", value: "+12%", icon: TrendingUp, isPercentage: true },
-          { label: "Produtos Ativos", value: metrics?.topSellingItems?.length || 0, icon: Package },
-        ].map((stat, index) => {
-          const Icon = stat.icon;
-          return (
-            <div key={index} className="card-premium p-5">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
-                  <Icon className="w-5 h-5 text-primary" />
-                </div>
-                <p className="text-sm font-medium text-muted-foreground">{stat.label}</p>
-              </div>
-              <p className={`text-2xl font-display font-bold ${stat.isPercentage ? 'text-primary' : 'text-foreground'}`}>
-                {stat.value}
-              </p>
-            </div>
-          );
-        })}
-      </motion.div>
-
-      {/* Export Section */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.6 }}
-        className="card-premium p-8 text-center bg-gradient-to-br from-muted/30 to-muted/50"
-      >
-        <h3 className="text-xl font-display font-bold text-foreground mb-2">Exportar Relatórios</h3>
-        <p className="text-muted-foreground mb-6">Baixe relatórios completos em PDF ou Excel</p>
-        <div className="flex gap-4 justify-center">
-          <button className="btn-secondary flex items-center gap-2">
-            <Download className="w-5 h-5" />
-            Exportar PDF
-          </button>
-          <button className="btn-primary flex items-center gap-2">
-            <Download className="w-5 h-5" />
-            Exportar Excel
-          </button>
+        <h2 className="text-xl font-display font-bold text-foreground mb-6">Itens Mais Vendidos</h2>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-border">
+                <th className="text-left py-3 px-4 text-sm font-semibold text-muted-foreground">Produto</th>
+                <th className="text-right py-3 px-4 text-sm font-semibold text-muted-foreground">Quantidade</th>
+                <th className="text-right py-3 px-4 text-sm font-semibold text-muted-foreground">Receita</th>
+                <th className="text-right py-3 px-4 text-sm font-semibold text-muted-foreground">Pedidos</th>
+              </tr>
+            </thead>
+            <tbody>
+              {topItems.map((item, index) => (
+                <tr key={index} className="border-b border-border hover:bg-muted/50 transition-colors">
+                  <td className="py-4 px-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center font-bold text-primary text-sm">
+                        {index + 1}
+                      </div>
+                      <span className="font-medium text-foreground">{item.productName}</span>
+                    </div>
+                  </td>
+                  <td className="py-4 px-4 text-right font-medium text-foreground">{item.totalQuantity}</td>
+                  <td className="py-4 px-4 text-right font-semibold text-primary">{formatCurrency(item.totalRevenue)}</td>
+                  <td className="py-4 px-4 text-right text-muted-foreground">{item.orderCount}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </motion.div>
     </div>

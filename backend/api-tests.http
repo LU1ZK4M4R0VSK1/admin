@@ -1,0 +1,592 @@
+###############################################################################
+# API TESTS - Analytics Backend
+# Compatível com: VS Code REST Client, Insomnia, HTTPie
+# 
+# INSTRUÇÕES:
+# 1. Instale a extensão "REST Client" no VS Code
+# 2. Execute as requisições em ordem (botão "Send Request" acima de cada ###)
+# 3. Os IDs retornados são salvos em variáveis para uso nas próximas requests
+# 4. Verifique os responses para confirmar persistência no banco
+###############################################################################
+
+@baseUrl = http://localhost:5000/api
+@contentType = application/json
+
+###############################################################################
+# 🪑 TESTES DE MESAS (TABLES)
+# Executar primeiro para ter mesas disponíveis para os pedidos
+###############################################################################
+
+### 1️⃣ CRIAR MESA #1 - Status Disponível
+# Objetivo: Criar mesa inicial para testes de pedidos
+# Validação: Status 201, retorna ID da mesa criada
+POST {{baseUrl}}/tables
+Content-Type: {{contentType}}
+
+{
+  "tableNumber": 1,
+  "capacity": 4,
+  "status": 0,
+  "location": "Salão Principal - Janela",
+  "currentWaiter": "João Silva"
+}
+
+### 2️⃣ CRIAR MESA #2 - Status Disponível
+# Objetivo: Criar segunda mesa para testes
+POST {{baseUrl}}/tables
+Content-Type: {{contentType}}
+
+{
+  "tableNumber": 2,
+  "capacity": 2,
+  "status": 0,
+  "location": "Salão Principal - Centro"
+}
+
+### 3️⃣ CRIAR MESA #3 - Status Reservada
+# Objetivo: Testar criação de mesa com status diferente
+POST {{baseUrl}}/tables
+Content-Type: {{contentType}}
+
+{
+  "tableNumber": 3,
+  "capacity": 6,
+  "status": 2,
+  "location": "Área VIP",
+  "currentWaiter": "Maria Santos"
+}
+
+### 4️⃣ LISTAR TODAS AS MESAS
+# Objetivo: Verificar se todas as mesas foram criadas
+# Validação: Status 200, retorna array com 3 mesas
+GET {{baseUrl}}/tables
+
+### 5️⃣ BUSCAR MESA POR ID
+# Objetivo: Verificar detalhes de uma mesa específica
+# Validação: Status 200, retorna dados completos da mesa
+GET {{baseUrl}}/tables/1
+
+### 6️⃣ BUSCAR MESA POR NÚMERO
+# Objetivo: Testar busca por número da mesa
+# Validação: Status 200, retorna mesa #2
+GET {{baseUrl}}/tables/number/2
+
+### 7️⃣ ATUALIZAR STATUS DA MESA PARA OCUPADA
+# Objetivo: Simular ocupação da mesa
+# Validação: Status 200, mesa muda para status Ocupada (1)
+PUT {{baseUrl}}/tables/1
+Content-Type: {{contentType}}
+
+{
+  "tableNumber": 1,
+  "capacity": 4,
+  "status": 1,
+  "location": "Salão Principal - Janela",
+  "currentWaiter": "João Silva",
+  "occupiedSince": "2025-12-27T18:30:00"
+}
+
+### 8️⃣ FILTRAR MESAS POR STATUS (Disponíveis)
+# Objetivo: Listar apenas mesas disponíveis
+# Validação: Status 200, retorna apenas mesa #2
+GET {{baseUrl}}/tables?status=0
+
+### 9️⃣ FILTRAR MESAS POR STATUS (Ocupadas)
+# Objetivo: Listar apenas mesas ocupadas
+# Validação: Status 200, retorna apenas mesa #1
+GET {{baseUrl}}/tables?status=1
+
+
+###############################################################################
+# 🍽️ TESTES DE CARDÁPIO (MENU ITEMS)
+# Executar antes dos pedidos para ter itens disponíveis
+###############################################################################
+
+### 1️⃣0️⃣ CRIAR ITEM - Categoria: Entradas
+# Objetivo: Criar entrada no cardápio
+# Validação: Status 201, confirma criação com ID
+POST {{baseUrl}}/menuitems
+Content-Type: {{contentType}}
+
+{
+  "name": "Bruschetta Italiana",
+  "description": "Pão italiano tostado com tomate fresco, manjericão e azeite",
+  "price": 18.90,
+  "category": "Entradas",
+  "imageUrl": "https://exemplo.com/bruschetta.jpg",
+  "isAvailable": true,
+  "preparationTimeMinutes": 10,
+  "ingredients": "Pão italiano, tomate, manjericão, alho, azeite",
+  "allergens": "Glúten"
+}
+
+### 1️⃣1️⃣ CRIAR ITEM - Categoria: Pratos principais
+# Objetivo: Criar prato principal
+POST {{baseUrl}}/menuitems
+Content-Type: {{contentType}}
+
+{
+  "name": "Risoto de Camarão",
+  "description": "Arroz arbóreo cremoso com camarões frescos e açafrão",
+  "price": 65.90,
+  "category": "Pratos principais",
+  "imageUrl": "https://exemplo.com/risoto.jpg",
+  "isAvailable": true,
+  "preparationTimeMinutes": 30,
+  "ingredients": "Arroz arbóreo, camarão, cebola, alho, vinho branco, açafrão, queijo parmesão",
+  "allergens": "Crustáceos, Lactose"
+}
+
+### 1️⃣2️⃣ CRIAR ITEM - Categoria: Bebidas
+# Objetivo: Criar bebida no cardápio
+POST {{baseUrl}}/menuitems
+Content-Type: {{contentType}}
+
+{
+  "name": "Suco Natural de Laranja",
+  "description": "Suco de laranja puro, sem açúcar adicionado",
+  "price": 12.00,
+  "category": "Bebidas",
+  "imageUrl": "https://exemplo.com/suco-laranja.jpg",
+  "isAvailable": true,
+  "preparationTimeMinutes": 5,
+  "ingredients": "Laranja",
+  "allergens": ""
+}
+
+### 1️⃣3️⃣ CRIAR ITEM - Categoria: Sobremesa
+# Objetivo: Criar sobremesa
+POST {{baseUrl}}/menuitems
+Content-Type: {{contentType}}
+
+{
+  "name": "Petit Gateau",
+  "description": "Bolinho de chocolate quente com sorvete de baunilha",
+  "price": 22.90,
+  "category": "Sobremesa",
+  "imageUrl": "https://exemplo.com/petit-gateau.jpg",
+  "isAvailable": true,
+  "preparationTimeMinutes": 15,
+  "ingredients": "Chocolate, farinha, ovos, açúcar, manteiga",
+  "allergens": "Glúten, Lactose, Ovos"
+}
+
+### 1️⃣4️⃣ LISTAR TODOS OS ITENS DO CARDÁPIO
+# Objetivo: Verificar todos os itens criados
+# Validação: Status 200, retorna 4 itens
+GET {{baseUrl}}/menuitems
+
+### 1️⃣5️⃣ BUSCAR ITEM POR ID
+# Objetivo: Verificar detalhes de um item específico
+# Validação: Status 200, retorna dados completos do item
+GET {{baseUrl}}/menuitems/1
+
+### 1️⃣6️⃣ FILTRAR POR CATEGORIA - Pratos principais
+# Objetivo: Listar apenas pratos principais
+# Validação: Status 200, retorna apenas o Risoto
+GET {{baseUrl}}/menuitems?category=Pratos principais
+
+### 1️⃣7️⃣ FILTRAR POR CATEGORIA - Bebidas
+# Objetivo: Listar apenas bebidas
+# Validação: Status 200, retorna apenas o Suco
+GET {{baseUrl}}/menuitems?category=Bebidas
+
+### 1️⃣8️⃣ BUSCAR POR NOME (Search)
+# Objetivo: Testar busca por texto
+# Validação: Status 200, retorna itens com "chocolate" no nome/descrição
+GET {{baseUrl}}/menuitems?search=chocolate
+
+### 1️⃣9️⃣ LISTAR CATEGORIAS DISPONÍVEIS
+# Objetivo: Obter lista de todas as categorias válidas
+# Validação: Status 200, retorna array com 4 categorias
+GET {{baseUrl}}/menuitems/categories
+
+### 2️⃣0️⃣ OBTER ESTATÍSTICAS DO CARDÁPIO
+# Objetivo: Ver resumo do cardápio
+# Validação: Status 200, retorna total de itens, disponíveis, etc
+GET {{baseUrl}}/menuitems/stats
+
+### 2️⃣1️⃣ ATUALIZAR ITEM DO CARDÁPIO
+# Objetivo: Alterar preço e disponibilidade
+# Validação: Status 200, confirma atualização
+PUT {{baseUrl}}/menuitems/1
+Content-Type: {{contentType}}
+
+{
+  "name": "Bruschetta Italiana",
+  "description": "Pão italiano tostado com tomate fresco, manjericão e azeite especial",
+  "price": 19.90,
+  "category": "Entradas",
+  "imageUrl": "https://exemplo.com/bruschetta.jpg",
+  "isAvailable": true,
+  "preparationTimeMinutes": 10,
+  "ingredients": "Pão italiano, tomate, manjericão, alho, azeite extravirgem",
+  "allergens": "Glúten"
+}
+
+### 2️⃣2️⃣ ALTERNAR DISPONIBILIDADE (Toggle Availability)
+# Objetivo: Marcar item como indisponível
+# Validação: Status 200, isAvailable muda para false
+PATCH {{baseUrl}}/menuitems/2/toggle-availability
+
+### 2️⃣3️⃣ VERIFICAR ITEM INDISPONÍVEL
+# Objetivo: Confirmar que item está indisponível
+# Validação: isAvailable = false
+GET {{baseUrl}}/menuitems/2
+
+### 2️⃣4️⃣ REATIVAR ITEM (Toggle Availability novamente)
+# Objetivo: Marcar item como disponível novamente
+PATCH {{baseUrl}}/menuitems/2/toggle-availability
+
+
+###############################################################################
+# 📦 TESTES DE PEDIDOS (ORDERS)
+# Executar após criar mesas e itens do cardápio
+###############################################################################
+
+### 2️⃣5️⃣ CRIAR PEDIDO #1 - Status inicial: Em Andamento
+# Objetivo: Criar pedido associado à Mesa #1
+# Validação: 
+#   - Status 201
+#   - Status do pedido = 0 (EmAndamento)
+#   - Retorna ID, CreatedAt, TableId = 1
+#   - TotalAmount calculado corretamente
+POST {{baseUrl}}/orders
+Content-Type: {{contentType}}
+
+{
+  "tableId": 1,
+  "items": [
+    {
+      "productName": "Bruschetta Italiana",
+      "quantity": 2,
+      "unitPrice": 19.90,
+      "notes": "Sem alho"
+    },
+    {
+      "productName": "Risoto de Camarão",
+      "quantity": 1,
+      "unitPrice": 65.90
+    },
+    {
+      "productName": "Suco Natural de Laranja",
+      "quantity": 2,
+      "unitPrice": 12.00
+    }
+  ],
+  "customerNotes": "Cliente aniversariante - preparar surpresa"
+}
+
+### 2️⃣6️⃣ CRIAR PEDIDO #2 - Mesa #2
+# Objetivo: Criar segundo pedido para teste de listagem
+POST {{baseUrl}}/orders
+Content-Type: {{contentType}}
+
+{
+  "tableId": 2,
+  "items": [
+    {
+      "productName": "Petit Gateau",
+      "quantity": 1,
+      "unitPrice": 22.90
+    }
+  ],
+  "customerNotes": ""
+}
+
+### 2️⃣7️⃣ LISTAR TODOS OS PEDIDOS
+# Objetivo: Verificar se ambos os pedidos foram criados
+# Validação: Status 200, retorna array com 2 pedidos
+GET {{baseUrl}}/orders
+
+### 2️⃣8️⃣ BUSCAR PEDIDO POR ID
+# Objetivo: Verificar detalhes completos do pedido #1
+# Validação: 
+#   - Status 200
+#   - Retorna itens do pedido
+#   - Retorna dados da mesa
+#   - Status = EmAndamento
+GET {{baseUrl}}/orders/1
+
+### 2️⃣9️⃣ FILTRAR PEDIDOS POR STATUS - Em Andamento
+# Objetivo: Listar apenas pedidos em andamento
+# Validação: Status 200, retorna os 2 pedidos criados
+GET {{baseUrl}}/orders?status=0
+
+### 3️⃣0️⃣ FILTRAR PEDIDOS POR MESA
+# Objetivo: Listar pedidos da Mesa #1
+# Validação: Status 200, retorna apenas pedido #1
+GET {{baseUrl}}/orders?tableId=1
+
+### 3️⃣1️⃣ EDITAR PEDIDO #1 - Adicionar item
+# Objetivo: Testar edição de pedido em andamento
+# Validação: Status 200, pedido atualizado com novo item
+PUT {{baseUrl}}/orders/1
+Content-Type: {{contentType}}
+
+{
+  "tableId": 1,
+  "items": [
+    {
+      "productName": "Bruschetta Italiana",
+      "quantity": 2,
+      "unitPrice": 19.90,
+      "notes": "Sem alho"
+    },
+    {
+      "productName": "Risoto de Camarão",
+      "quantity": 1,
+      "unitPrice": 65.90
+    },
+    {
+      "productName": "Suco Natural de Laranja",
+      "quantity": 2,
+      "unitPrice": 12.00
+    },
+    {
+      "productName": "Petit Gateau",
+      "quantity": 1,
+      "unitPrice": 22.90,
+      "notes": "Com sorvete extra"
+    }
+  ],
+  "customerNotes": "Cliente aniversariante - preparar surpresa"
+}
+
+### 3️⃣2️⃣ ALTERAR STATUS PARA ENTREGUE
+# Objetivo: Mudar status do pedido #1
+# Validação: 
+#   - Status 200
+#   - Status muda para 2 (Entregue)
+#   - DeliveredAt é preenchido com timestamp
+#   - Histórico de status é criado
+PATCH {{baseUrl}}/orders/1/status
+Content-Type: {{contentType}}
+
+{
+  "newStatus": 2,
+  "notes": "Pedido entregue pelo garçom João",
+  "changedBy": "João Silva"
+}
+
+### 3️⃣3️⃣ VERIFICAR HISTÓRICO DE STATUS
+# Objetivo: Confirmar que o histórico foi salvo
+# Validação: 
+#   - Status atual = Entregue
+#   - DeliveredAt preenchido
+#   - StatusHistory contém mudança EmAndamento → Entregue
+GET {{baseUrl}}/orders/1
+
+### 3️⃣4️⃣ ALTERAR STATUS PARA PAGO
+# Objetivo: Finalizar pedido como pago
+# Validação:
+#   - Status 200
+#   - Status muda para 3 (Pago)
+#   - PaidAt é preenchido
+#   - Histórico registra Entregue → Pago
+PATCH {{baseUrl}}/orders/1/status
+Content-Type: {{contentType}}
+
+{
+  "newStatus": 3,
+  "notes": "Pagamento efetuado com cartão",
+  "changedBy": "Caixa - Ana Costa"
+}
+
+### 3️⃣5️⃣ TENTAR EDITAR PEDIDO PAGO - DEVE FALHAR
+# Objetivo: Validar regra de negócio (não pode editar pedido pago)
+# Validação: Status 400, mensagem de erro informando que não pode editar
+PUT {{baseUrl}}/orders/1
+Content-Type: {{contentType}}
+
+{
+  "tableId": 1,
+  "items": [
+    {
+      "productName": "Teste",
+      "quantity": 1,
+      "unitPrice": 10.00
+    }
+  ],
+  "customerNotes": "Tentando editar pedido pago"
+}
+
+### 3️⃣6️⃣ TENTAR ALTERAR STATUS DE PEDIDO PAGO - DEVE FALHAR
+# Objetivo: Validar que não pode mudar status de pedido pago
+# Validação: Status 400, erro informando que pedido já está pago
+PATCH {{baseUrl}}/orders/1/status
+Content-Type: {{contentType}}
+
+{
+  "newStatus": 0,
+  "notes": "Tentando voltar status",
+  "changedBy": "Sistema"
+}
+
+### 3️⃣7️⃣ CANCELAR PEDIDO #2
+# Objetivo: Testar cancelamento de pedido
+# Validação:
+#   - Status 200
+#   - Status muda para 1 (Cancelado)
+#   - CancelledAt é preenchido
+PATCH {{baseUrl}}/orders/2/status
+Content-Type: {{contentType}}
+
+{
+  "newStatus": 1,
+  "notes": "Cliente desistiu do pedido",
+  "changedBy": "Maria Santos"
+}
+
+### 3️⃣8️⃣ FILTRAR PEDIDOS POR STATUS - Pago
+# Objetivo: Listar apenas pedidos pagos
+# Validação: Status 200, retorna apenas pedido #1
+GET {{baseUrl}}/orders?status=3
+
+### 3️⃣9️⃣ FILTRAR PEDIDOS POR STATUS - Cancelado
+# Objetivo: Listar apenas pedidos cancelados
+# Validação: Status 200, retorna apenas pedido #2
+GET {{baseUrl}}/orders?status=1
+
+
+###############################################################################
+# 📊 TESTES DE MESAS COM PEDIDOS VINCULADOS
+# Verificar relacionamento entre mesas e pedidos
+###############################################################################
+
+### 4️⃣0️⃣ BUSCAR MESA #1 COM PEDIDOS
+# Objetivo: Verificar pedidos vinculados à mesa
+# Validação:
+#   - Status 200
+#   - Retorna pedido #1 associado
+#   - Mostra TotalOrders e ActiveOrders
+GET {{baseUrl}}/tables/1
+
+### 4️⃣1️⃣ OBTER ESTATÍSTICAS DA MESA #1
+# Objetivo: Ver tempo de ocupação e duração dos pedidos
+# Validação:
+#   - Status 200
+#   - Retorna tempo total desde ocupação
+#   - Lista pedidos com tempo por status
+#   - Mostra OrderTimeDto com StatusDurations
+GET {{baseUrl}}/tables/1/stats
+
+### 4️⃣2️⃣ BUSCAR MESA #2 COM PEDIDOS
+# Objetivo: Verificar pedido cancelado na mesa #2
+GET {{baseUrl}}/tables/2
+
+### 4️⃣3️⃣ CRIAR NOVO PEDIDO NA MESA #1
+# Objetivo: Testar múltiplos pedidos na mesma mesa
+POST {{baseUrl}}/orders
+Content-Type: {{contentType}}
+
+{
+  "tableId": 1,
+  "items": [
+    {
+      "productName": "Suco Natural de Laranja",
+      "quantity": 3,
+      "unitPrice": 12.00
+    }
+  ],
+  "customerNotes": "Pedido adicional"
+}
+
+### 4️⃣4️⃣ VERIFICAR MESA #1 COM MÚLTIPLOS PEDIDOS
+# Objetivo: Confirmar que mesa mostra todos os pedidos
+# Validação: TotalOrders >= 2
+GET {{baseUrl}}/tables/1
+
+
+###############################################################################
+# 🗑️ TESTES DE EXCLUSÃO
+# Executar por último para não afetar outros testes
+###############################################################################
+
+### 4️⃣5️⃣ EXCLUIR PEDIDO #2
+# Objetivo: Remover pedido cancelado
+# Validação: Status 204 (No Content)
+DELETE {{baseUrl}}/orders/2
+
+### 4️⃣6️⃣ VERIFICAR PEDIDO EXCLUÍDO
+# Objetivo: Confirmar que pedido não existe mais
+# Validação: Status 404
+GET {{baseUrl}}/orders/2
+
+### 4️⃣7️⃣ EXCLUIR ITEM DO CARDÁPIO #4
+# Objetivo: Remover sobremesa do cardápio
+# Validação: Status 204
+DELETE {{baseUrl}}/menuitems/4
+
+### 4️⃣8️⃣ VERIFICAR ITEM EXCLUÍDO
+# Objetivo: Confirmar que item não existe mais
+# Validação: Status 404
+GET {{baseUrl}}/menuitems/4
+
+### 4️⃣9️⃣ TENTAR EXCLUIR MESA COM PEDIDOS - PODE FALHAR
+# Objetivo: Testar exclusão de mesa com pedidos ativos
+# Obs: Depende da configuração de cascade no banco
+DELETE {{baseUrl}}/tables/1
+
+### 5️⃣0️⃣ EXCLUIR MESA SEM PEDIDOS
+# Objetivo: Remover mesa #3 que não tem pedidos
+# Validação: Status 204
+DELETE {{baseUrl}}/tables/3
+
+
+###############################################################################
+# ✅ TESTES FINAIS - VALIDAÇÃO COMPLETA
+###############################################################################
+
+### 5️⃣1️⃣ LISTAR TODOS OS PEDIDOS RESTANTES
+# Objetivo: Ver estado final dos pedidos
+GET {{baseUrl}}/orders
+
+### 5️⃣2️⃣ LISTAR TODAS AS MESAS RESTANTES
+# Objetivo: Ver estado final das mesas
+GET {{baseUrl}}/tables
+
+### 5️⃣3️⃣ LISTAR TODOS OS ITENS DO CARDÁPIO RESTANTES
+# Objetivo: Ver estado final do cardápio
+GET {{baseUrl}}/menuitems
+
+
+###############################################################################
+# 📋 CHECKLIST DE VALIDAÇÃO
+###############################################################################
+# 
+# ✅ PEDIDOS:
+#   □ Pedidos são criados com status EmAndamento (0)
+#   □ CreatedAt é preenchido automaticamente
+#   □ TotalAmount é calculado corretamente
+#   □ Edição funciona apenas quando status ≠ Pago
+#   □ Mudança de status gera histórico (OrderStatusHistory)
+#   □ Timestamps são salvos: PaidAt, CancelledAt, DeliveredAt
+#   □ Histórico retorna FromStatus, ToStatus, ChangedAt, Notes, ChangedBy
+#   □ Não permite editar nem mudar status de pedido Pago
+#
+# ✅ MESAS:
+#   □ Mesas são criadas com status correto (Disponível, Ocupada, Reservada)
+#   □ Pedidos são vinculados corretamente às mesas
+#   □ TotalOrders conta todos os pedidos da mesa
+#   □ ActiveOrders conta apenas pedidos não finalizados
+#   □ Stats retorna tempo desde ocupação
+#   □ Stats mostra duração de cada pedido por status
+#   □ OrderTimeDto contém StatusDurations detalhado
+#
+# ✅ CARDÁPIO:
+#   □ Itens são criados com categoria válida (Entradas, Bebidas, Pratos principais, Sobremesa)
+#   □ Ingredientes são salvos corretamente
+#   □ Filtro por categoria funciona
+#   □ Busca por nome/descrição funciona
+#   □ Toggle availability alterna isAvailable
+#   □ Stats retorna total, disponíveis, etc
+#
+# ✅ FRONT-END COMPATIBILITY:
+#   □ Dados retornados possuem todos os campos necessários
+#   □ Formato de data é consistente (ISO 8601)
+#   □ Status são enums numéricos (0, 1, 2, 3)
+#   □ Arrays e objetos relacionados são incluídos nas respostas
+#   □ Não há referências circulares (ReferenceHandler.IgnoreCycles)
+#
+###############################################################################
