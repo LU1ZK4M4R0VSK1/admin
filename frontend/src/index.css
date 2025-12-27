@@ -1,0 +1,194 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Montserrat:wght@300;400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Cores originais do restaurante (tema escuro elegante) */
+    --background: 30 10% 8%;
+    --foreground: 40 20% 90%;
+
+    --card: 40 15% 98%;
+    --card-foreground: 30 10% 15%;
+
+    --popover: 40 15% 98%;
+    --popover-foreground: 30 10% 15%;
+
+    --primary: 40 20% 96%;
+    --primary-foreground: 30 10% 15%;
+
+    --secondary: 35 15% 88%;
+    --secondary-foreground: 30 10% 20%;
+
+    --muted: 35 12% 92%;
+    --muted-foreground: 30 10% 65%;
+
+    --accent: 38 35% 58%;
+    --accent-foreground: 30 10% 15%;
+
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 40 20% 98%;
+
+    --border: 35 15% 85%;
+    --input: 35 15% 90%;
+    --ring: 35 25% 45%;
+
+    --radius: 0rem;
+  }
+  
+  /* Cores específicas para o Dashboard de Analytics (tema claro verde) */
+  body.dashboard-page {
+    --background: 150 10% 98%;
+    --foreground: 160 25% 10%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 160 25% 10%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 160 25% 10%;
+
+    --primary: 158 64% 42%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 150 15% 95%;
+    --secondary-foreground: 160 25% 15%;
+
+    --muted: 150 10% 94%;
+    --muted-foreground: 160 10% 45%;
+
+    --accent: 158 60% 94%;
+    --accent-foreground: 158 64% 32%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 142 71% 45%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+
+    --border: 150 15% 90%;
+    --input: 150 15% 90%;
+    --ring: 158 64% 42%;
+
+    --radius: 0.75rem;
+
+    --chart-1: 158 64% 42%;
+    --chart-2: 262 83% 58%;
+    --chart-3: 38 92% 50%;
+    --chart-4: 199 89% 48%;
+    --chart-5: 0 72% 51%;
+
+    --sidebar-background: 158 30% 18%;
+    --sidebar-foreground: 150 15% 95%;
+    --sidebar-primary: 158 64% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 158 25% 25%;
+    --sidebar-accent-foreground: 150 15% 95%;
+    --sidebar-border: 158 20% 25%;
+    --sidebar-ring: 158 64% 50%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+  
+  /* Página do restaurante usa fontes elegantes */
+  body:not(.dashboard-page) {
+    font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  }
+  
+  body:not(.dashboard-page) h1,
+  body:not(.dashboard-page) h2,
+  body:not(.dashboard-page) h3,
+  body:not(.dashboard-page) h4,
+  body:not(.dashboard-page) h5,
+  body:not(.dashboard-page) h6 {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+  }
+  
+  /* Dashboard usa Inter */
+  body.dashboard-page,
+  body.dashboard-page * {
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    @apply bg-gradient-to-r from-primary to-emerald-400 bg-clip-text text-transparent;
+  }
+  
+  .card-shadow {
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.04), 0 1px 2px -1px rgb(0 0 0 / 0.04);
+  }
+  
+  .card-shadow-hover {
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.06), 0 2px 4px -2px rgb(0 0 0 / 0.06);
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.8s ease-out forwards;
+  }
+
+  .animate-fade-in-up {
+    animation: fadeInUp 0.8s ease-out forwards;
+  }
+
+  .animate-slide-in {
+    animation: slideIn 0.5s ease-out forwards;
+  }
+
+  .animation-delay-200 {
+    animation-delay: 0.2s;
+  }
+
+  .animation-delay-400 {
+    animation-delay: 0.4s;
+  }
+
+  .animation-delay-600 {
+    animation-delay: 0.6s;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}

@@ -1,0 +1,56 @@
+# Dependências
+node_modules/
+package-lock.json
+
+# Build outputs
+dist/
+build/
+*.dll
+*.exe
+*.pdb
+bin/
+obj/
+
+# IDE
+.vs/
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+logs/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Database
+*.db
+*.db-shm
+*.db-wal
+
+# Backend específico
+backend/bin/
+backend/obj/
+backend/*.db
+backend/appsettings.Development.json
+
+# Frontend específico
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/coverage/
+
+# Temporários
+*.tmp
+*.temp
+.cache/
