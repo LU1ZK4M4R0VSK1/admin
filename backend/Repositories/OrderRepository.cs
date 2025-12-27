@@ -52,7 +52,7 @@ public class OrderRepository : Repository<Order>, IOrderRepository
     public async Task<int> GetNextQueuePositionAsync()
     {
         var maxPosition = await _dbSet
-            .Where(o => o.Status == OrderStatus.Pendente || o.Status == OrderStatus.Preparando)
+            .Where(o => o.Status == OrderStatus.EmAndamento)
             .MaxAsync(o => (int?)o.QueuePosition);
         
         return (maxPosition ?? 0) + 1;

@@ -47,8 +47,6 @@ public class TableRepository : Repository<Table>, ITableRepository
     {
         return await _context.Orders
             .AnyAsync(o => o.TableId == tableId && 
-                          (o.Status == OrderStatus.Pendente || 
-                           o.Status == OrderStatus.Preparando || 
-                           o.Status == OrderStatus.Pronto));
+                          (o.Status == OrderStatus.EmAndamento));
     }
 }

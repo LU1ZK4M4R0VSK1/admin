@@ -70,7 +70,7 @@ public class OrderService
 
             order.TotalAmount = totalAmount;
             order.QueuePosition = await _orderRepository.GetNextQueuePositionAsync();
-            order.Status = OrderStatus.Pendente;
+            order.Status = OrderStatus.EmAndamento;
             order.CreatedAt = DateTime.UtcNow;
 
             var createdOrder = await _orderRepository.AddAsync(order);

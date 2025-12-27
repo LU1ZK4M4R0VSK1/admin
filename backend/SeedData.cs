@@ -55,7 +55,7 @@ public static class SeedData
             new Order
             {
                 TableId = 1,
-                Status = OrderStatus.Pronto,
+                Status = OrderStatus.Entregue,
                 CreatedAt = DateTime.Now.AddHours(-2),
                 TotalAmount = 70.90m,
                 Items = new List<OrderItem>
@@ -68,7 +68,7 @@ public static class SeedData
             new Order
             {
                 TableId = 2,
-                Status = OrderStatus.Preparando,
+                Status = OrderStatus.EmAndamento,
                 CreatedAt = DateTime.Now.AddMinutes(-30),
                 TotalAmount = 45.00m,
                 Items = new List<OrderItem>

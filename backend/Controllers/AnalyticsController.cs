@@ -225,8 +225,7 @@ public class AnalyticsController : ControllerBase
                     totalRevenue = Math.Round(totalRevenue, 2),
                     totalOrders,
                     averageTicket = Math.Round(averageTicket, 2),
-                    pendingOrders = orders.Count(o => o.Status == OrderStatus.Pendente),
-                    preparingOrders = orders.Count(o => o.Status == OrderStatus.Preparando)
+                    pendingOrders = orders.Count(o => o.Status == OrderStatus.EmAndamento),
                 },
                 dailyRevenue,
                 statusDistribution

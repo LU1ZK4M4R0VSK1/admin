@@ -19,6 +19,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<OrderItem> OrderItems { get; set; }
     public DbSet<MenuItem> MenuItems { get; set; }
     public DbSet<Table> Tables { get; set; }
+    public DbSet<OrderStatusHistory> OrderStatusHistories { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -42,5 +43,22 @@ public class ApplicationDbContext : DbContext
         modelBuilder.Entity<Table>()
             .HasIndex(t => t.TableNumber)
             .IsUnique();
+
+        // Relacionamento Order -> Table
+        modelBuilder.Entity<Order>()
+            .HasOne(o => o.Table)
+            .WithMany(t => t.Orders)
+            .HasForeignKey(o => o.TableId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Relacionamento Order -> OrderStatusHistory
+        modelBuilder.Entity<OrderStatusHistory>()
+            .HasOne(h => h.Order)
+            .WithMany(o => o.StatusHistory)
+            .HasForeignKey(h => h.OrderId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<OrderStatusHistory>()
+            .HasIndex(h => h.OrderId);
     }
 }

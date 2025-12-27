@@ -12,7 +12,7 @@ public class Order
     public int TableId { get; set; }
 
     [Required]
-    public OrderStatus Status { get; set; } = OrderStatus.Pendente;
+    public OrderStatus Status { get; set; } = OrderStatus.EmAndamento;
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
@@ -28,13 +28,24 @@ public class Order
     public string? CustomerNotes { get; set; }
 
     public int QueuePosition { get; set; }
+
+    // Relacionamento com histórico de status
+    public List<OrderStatusHistory>? StatusHistory { get; set; }
+
+    // Navegação para mesa
+    [ForeignKey("TableId")]
+    public Table? Table { get; set; }
+
+    // Timestamps específicos para cada status
+    public DateTime? PaidAt { get; set; }
+    public DateTime? CancelledAt { get; set; }
+    public DateTime? DeliveredAt { get; set; }
 }
 
 public enum OrderStatus
 {
-    Pendente = 0,
-    Preparando = 1,
-    Pronto = 2,
-    Entregue = 3,
-    Cancelado = 4
+    EmAndamento = 0,    // Status inicial automático
+    Cancelado = 1,
+    Entregue = 2,
+    Pago = 3
 }
