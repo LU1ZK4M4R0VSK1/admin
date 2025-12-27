@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { Users, Plus, QrCode, ToggleLeft, ToggleRight } from "lucide-react";
+import { motion } from "framer-motion";
+import { Users, Plus, QrCode, ToggleLeft, ToggleRight, UserCheck, UserX, Clock } from "lucide-react";
 
 interface Table {
   id: number;
@@ -34,29 +35,40 @@ export default function TableManagement() {
     }
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusConfig = (status: string) => {
     switch (status) {
       case "available":
-        return "bg-green-100 text-green-700 border-green-300";
+        return {
+          label: "Disponível",
+          color: "bg-primary/10 text-primary border-primary/20",
+          icon: UserCheck,
+          iconColor: "text-primary",
+          cardBg: "bg-primary/5 border-primary/20"
+        };
       case "occupied":
-        return "bg-red-100 text-red-700 border-red-300";
+        return {
+          label: "Ocupada",
+          color: "bg-red-50 text-red-600 border-red-200",
+          icon: UserX,
+          iconColor: "text-red-500",
+          cardBg: "bg-red-50/50 border-red-200"
+        };
       case "reserved":
-        return "bg-yellow-100 text-yellow-700 border-yellow-300";
+        return {
+          label: "Reservada",
+          color: "bg-amber-50 text-amber-600 border-amber-200",
+          icon: Clock,
+          iconColor: "text-amber-500",
+          cardBg: "bg-amber-50/50 border-amber-200"
+        };
       default:
-        return "bg-slate-100 text-slate-700 border-slate-300";
-    }
-  };
-
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case "available":
-        return "Disponível";
-      case "occupied":
-        return "Ocupada";
-      case "reserved":
-        return "Reservada";
-      default:
-        return "Desconhecido";
+        return {
+          label: "Desconhecido",
+          color: "bg-muted text-muted-foreground border-border",
+          icon: Users,
+          iconColor: "text-muted-foreground",
+          cardBg: "border-border"
+        };
     }
   };
 
@@ -64,108 +76,131 @@ export default function TableManagement() {
     return (
       <div className="flex items-center justify-center h-96">
         <div className="text-center">
-          <div className="w-12 h-12 border-4 border-green-200 rounded-full animate-spin border-t-green-600 mx-auto mb-4"></div>
-          <p className="text-slate-600">Carregando mesas...</p>
+          <div className="w-12 h-12 border-4 border-primary/20 rounded-full animate-spin border-t-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Carregando mesas...</p>
         </div>
       </div>
     );
   }
 
+  const availableCount = tables.filter(t => t.status === "available" && t.isActive).length;
+  const occupiedCount = tables.filter(t => t.status === "occupied").length;
+  const reservedCount = tables.filter(t => t.status === "reserved").length;
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
-            <Users className="w-6 h-6 text-purple-600" />
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4"
+      >
+        <div className="flex items-center gap-4">
+          <div className="w-14 h-14 bg-gradient-to-br from-violet-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
+            <Users className="w-7 h-7 text-primary-foreground" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-slate-900">Mesas</h1>
-            <p className="text-slate-600">Gerenciar mesas do restaurante</p>
+            <h1 className="text-2xl lg:text-3xl font-display font-bold text-foreground">Mesas</h1>
+            <p className="text-muted-foreground">Gerenciar mesas do restaurante</p>
           </div>
         </div>
-        <button className="flex items-center gap-2 bg-green-500 text-white px-4 py-2 rounded-xl hover:bg-green-600 transition-colors font-medium">
+        <button className="btn-primary flex items-center justify-center gap-2 w-full lg:w-auto">
           <Plus className="w-5 h-5" />
           Adicionar Mesa
         </button>
-      </div>
+      </motion.div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-xl p-4 border border-slate-100">
-          <p className="text-slate-600 text-sm mb-1">Total de Mesas</p>
-          <p className="text-2xl font-bold text-slate-900">{tables.length}</p>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="grid grid-cols-2 lg:grid-cols-4 gap-4"
+      >
+        <div className="card-premium p-5">
+          <p className="text-sm text-muted-foreground font-medium mb-1">Total de Mesas</p>
+          <p className="text-3xl font-display font-bold text-foreground">{tables.length}</p>
         </div>
-        <div className="bg-green-50 rounded-xl p-4 border border-green-200">
-          <p className="text-green-700 text-sm mb-1">Disponíveis</p>
-          <p className="text-2xl font-bold text-green-600">
-            {tables.filter(t => t.status === "available" && t.isActive).length}
-          </p>
+        <div className="card-premium p-5 bg-primary/5 border-primary/20">
+          <p className="text-sm text-primary font-medium mb-1">Disponíveis</p>
+          <p className="text-3xl font-display font-bold text-primary">{availableCount}</p>
         </div>
-        <div className="bg-red-50 rounded-xl p-4 border border-red-200">
-          <p className="text-red-700 text-sm mb-1">Ocupadas</p>
-          <p className="text-2xl font-bold text-red-600">
-            {tables.filter(t => t.status === "occupied").length}
-          </p>
+        <div className="card-premium p-5 bg-red-50/50 border-red-200">
+          <p className="text-sm text-red-600 font-medium mb-1">Ocupadas</p>
+          <p className="text-3xl font-display font-bold text-red-600">{occupiedCount}</p>
         </div>
-        <div className="bg-yellow-50 rounded-xl p-4 border border-yellow-200">
-          <p className="text-yellow-700 text-sm mb-1">Reservadas</p>
-          <p className="text-2xl font-bold text-yellow-600">
-            {tables.filter(t => t.status === "reserved").length}
-          </p>
+        <div className="card-premium p-5 bg-amber-50/50 border-amber-200">
+          <p className="text-sm text-amber-600 font-medium mb-1">Reservadas</p>
+          <p className="text-3xl font-display font-bold text-amber-600">{reservedCount}</p>
         </div>
-      </div>
+      </motion.div>
 
       {/* Tables Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {tables.map((table) => (
-          <div
-            key={table.id}
-            className={`bg-white rounded-2xl p-6 shadow-sm border-2 hover:shadow-md transition-shadow ${
-              !table.isActive ? "opacity-50" : ""
-            } ${table.status === "occupied" ? "border-red-200" : "border-slate-100"}`}
-          >
-            {/* Table Header */}
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                  table.status === "available" ? "bg-green-100" :
-                  table.status === "occupied" ? "bg-red-100" : "bg-yellow-100"
-                }`}>
-                  <span className={`font-bold text-xl ${
-                    table.status === "available" ? "text-green-600" :
-                    table.status === "occupied" ? "text-red-600" : "text-yellow-600"
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        {tables.map((table, index) => {
+          const statusConfig = getStatusConfig(table.status);
+          const StatusIcon = statusConfig.icon;
+          return (
+            <motion.div
+              key={table.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1 }}
+              className={`card-premium p-6 ${!table.isActive ? 'opacity-50' : ''} ${table.isActive ? statusConfig.cardBg : ''}`}
+            >
+              {/* Table Header */}
+              <div className="flex items-center justify-between mb-5">
+                <div className="flex items-center gap-4">
+                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${
+                    table.status === "available" ? "bg-primary/10" :
+                    table.status === "occupied" ? "bg-red-100" : "bg-amber-100"
                   }`}>
-                    {table.number}
-                  </span>
+                    <span className={`font-display font-bold text-2xl ${
+                      table.status === "available" ? "text-primary" :
+                      table.status === "occupied" ? "text-red-600" : "text-amber-600"
+                    }`}>
+                      {table.number}
+                    </span>
+                  </div>
+                  <div>
+                    <h3 className="font-display font-bold text-foreground text-lg">Mesa {table.number}</h3>
+                    <p className="text-sm text-muted-foreground flex items-center gap-1.5">
+                      <Users className="w-4 h-4" />
+                      {table.capacity} pessoas
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-bold text-slate-900">Mesa {table.number}</h3>
-                  <p className="text-sm text-slate-600">{table.capacity} pessoas</p>
-                </div>
+                <button 
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                  title={table.isActive ? "Desativar mesa" : "Ativar mesa"}
+                >
+                  {table.isActive ? (
+                    <ToggleRight className="w-8 h-8 text-primary" />
+                  ) : (
+                    <ToggleLeft className="w-8 h-8" />
+                  )}
+                </button>
               </div>
-              <button className="text-slate-400 hover:text-slate-600">
-                {table.isActive ? <ToggleRight className="w-6 h-6 text-green-500" /> : <ToggleLeft className="w-6 h-6" />}
-              </button>
-            </div>
 
-            {/* Status Badge */}
-            <div className={`px-3 py-2 rounded-lg text-sm font-medium border-2 mb-4 ${getStatusColor(table.status)}`}>
-              {getStatusLabel(table.status)}
-            </div>
+              {/* Status Badge */}
+              <div className={`flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold border mb-5 ${statusConfig.color}`}>
+                <StatusIcon className={`w-4 h-4 ${statusConfig.iconColor}`} />
+                {statusConfig.label}
+              </div>
 
-            {/* Actions */}
-            <div className="flex gap-2">
-              <button className="flex-1 flex items-center justify-center gap-2 bg-slate-100 text-slate-700 py-2 rounded-lg hover:bg-slate-200 transition-colors font-medium text-sm">
-                <QrCode className="w-4 h-4" />
-                QR Code
-              </button>
-              <button className="px-4 py-2 border-2 border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors font-medium text-sm">
-                Editar
-              </button>
-            </div>
-          </div>
-        ))}
+              {/* Actions */}
+              <div className="flex gap-3">
+                <button className="flex-1 btn-secondary flex items-center justify-center gap-2 py-3">
+                  <QrCode className="w-5 h-5" />
+                  QR Code
+                </button>
+                <button className="flex-1 btn-ghost border border-border py-3">
+                  Editar
+                </button>
+              </div>
+            </motion.div>
+          );
+        })}
       </div>
     </div>
   );

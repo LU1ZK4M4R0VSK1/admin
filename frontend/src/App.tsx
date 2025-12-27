@@ -24,13 +24,13 @@ const App = () => (
         <Routes>
           {/* Página pública */}
           <Route path="/" element={<Index />} />
-          
+
           {/* Rota dinâmica para cardápio por mesa (clientes) */}
           <Route path="/mesa/:tableId/cardapio" element={<MenuPage />} />
-          
+
           {/* Redirecionamento para rotas administrativas */}
           <Route path="/analytics" element={<Navigate to="/admin/analytics" replace />} />
-          
+
           {/* Painel Administrativo - SPA com Sidebar */}
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<Dashboard />} />
@@ -39,8 +39,8 @@ const App = () => (
             <Route path="mesas" element={<TableManagement />} />
             <Route path="analytics" element={<AnalyticsDashboard />} />
           </Route>
-          
-          {/* Catch-all para página 404 */}
+
+          {/* Rota 404 */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { UtensilsCrossed, Plus, Pencil, Trash2, DollarSign } from "lucide-react";
+import { motion } from "framer-motion";
+import { UtensilsCrossed, Plus, Pencil, Trash2, DollarSign, Search, Filter, Check, X } from "lucide-react";
 
 interface MenuItem {
   id: number;
@@ -15,6 +16,7 @@ export default function MenuManagement() {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState("Todos");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const categories = ["Todos", "Entradas", "Pratos Principais", "Sobremesas", "Bebidas"];
 
@@ -58,112 +60,167 @@ export default function MenuManagement() {
     }
   };
 
-  const filteredItems = selectedCategory === "Todos" 
-    ? menuItems 
-    : menuItems.filter(item => item.category === selectedCategory);
+  const filteredItems = menuItems.filter(item => {
+    const matchesCategory = selectedCategory === "Todos" || item.category === selectedCategory;
+    const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         item.description.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-96">
         <div className="text-center">
-          <div className="w-12 h-12 border-4 border-green-200 rounded-full animate-spin border-t-green-600 mx-auto mb-4"></div>
-          <p className="text-slate-600">Carregando cardápio...</p>
+          <div className="w-12 h-12 border-4 border-primary/20 rounded-full animate-spin border-t-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Carregando cardápio...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-            <UtensilsCrossed className="w-6 h-6 text-green-600" />
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4"
+      >
+        <div className="flex items-center gap-4">
+          <div className="w-14 h-14 bg-gradient-primary rounded-2xl flex items-center justify-center shadow-glow">
+            <UtensilsCrossed className="w-7 h-7 text-primary-foreground" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-slate-900">Cardápio</h1>
-            <p className="text-slate-600">Gerenciar itens do menu</p>
+            <h1 className="text-2xl lg:text-3xl font-display font-bold text-foreground">Cardápio</h1>
+            <p className="text-muted-foreground">Gerenciar itens do menu</p>
           </div>
         </div>
-        <button className="flex items-center gap-2 bg-green-500 text-white px-4 py-2 rounded-xl hover:bg-green-600 transition-colors font-medium">
+        <button className="btn-primary flex items-center justify-center gap-2 w-full lg:w-auto">
           <Plus className="w-5 h-5" />
           Adicionar Item
         </button>
-      </div>
+      </motion.div>
 
-      {/* Category Filter */}
-      <div className="flex gap-2 overflow-x-auto pb-2">
-        {categories.map((category) => (
-          <button
-            key={category}
-            onClick={() => setSelectedCategory(category)}
-            className={`px-4 py-2 rounded-xl font-medium whitespace-nowrap transition-all ${
-              selectedCategory === category
-                ? "bg-green-500 text-white"
-                : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50"
-            }`}
-          >
-            {category}
-          </button>
-        ))}
-      </div>
+      {/* Filters */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="card-premium p-4"
+      >
+        <div className="flex flex-col lg:flex-row gap-4">
+          {/* Search */}
+          <div className="flex-1 relative">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+            <input
+              type="text"
+              placeholder="Buscar itens..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="input-premium pl-12"
+            />
+          </div>
+          
+          {/* Category Filter */}
+          <div className="flex gap-2 overflow-x-auto pb-2 lg:pb-0">
+            {categories.map((category) => (
+              <button
+                key={category}
+                onClick={() => setSelectedCategory(category)}
+                className={`px-4 py-2.5 rounded-xl font-medium whitespace-nowrap transition-all duration-200 ${
+                  selectedCategory === category
+                    ? "btn-primary"
+                    : "btn-secondary"
+                }`}
+              >
+                {category}
+              </button>
+            ))}
+          </div>
+        </div>
+      </motion.div>
 
       {/* Menu Items Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredItems.map((item) => (
-          <div
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        {filteredItems.map((item, index) => (
+          <motion.div
             key={item.id}
-            className={`bg-white rounded-2xl p-6 shadow-sm border-2 ${
-              item.isAvailable ? "border-slate-100" : "border-red-200 bg-red-50/50"
-            } hover:shadow-md transition-shadow`}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.1 }}
+            className={`card-premium p-6 ${!item.isAvailable ? 'opacity-60' : ''}`}
           >
             {/* Item Header */}
-            <div className="flex items-start justify-between mb-3">
-              <div className="flex-1">
-                <h3 className="font-bold text-slate-900 text-lg mb-1">{item.name}</h3>
-                <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-lg">
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-2">
+                  <h3 className="font-display font-bold text-foreground text-lg truncate">{item.name}</h3>
+                  {!item.isAvailable && (
+                    <span className="flex-shrink-0 px-2 py-0.5 bg-red-50 text-red-600 text-xs font-semibold rounded-lg">
+                      Indisponível
+                    </span>
+                  )}
+                </div>
+                <span className="inline-block px-2.5 py-1 bg-primary/10 text-primary text-xs font-semibold rounded-lg">
                   {item.category}
                 </span>
               </div>
-              <div className="flex gap-2">
-                <button className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors">
-                  <Pencil className="w-4 h-4 text-slate-600" />
+              <div className="flex gap-1 ml-2">
+                <button className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-muted transition-colors">
+                  <Pencil className="w-4 h-4 text-muted-foreground hover:text-foreground" />
                 </button>
-                <button className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-red-50 transition-colors">
-                  <Trash2 className="w-4 h-4 text-red-600" />
+                <button className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-red-50 transition-colors">
+                  <Trash2 className="w-4 h-4 text-muted-foreground hover:text-red-500" />
                 </button>
               </div>
             </div>
 
             {/* Description */}
-            <p className="text-slate-600 text-sm mb-4">{item.description}</p>
+            <p className="text-muted-foreground text-sm mb-5 line-clamp-2">{item.description}</p>
 
             {/* Price and Status */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1 text-green-600 font-bold text-xl">
-                <DollarSign className="w-5 h-5" />
-                {item.price.toFixed(2)}
+            <div className="flex items-center justify-between pt-4 border-t border-border">
+              <div className="flex items-center gap-1">
+                <span className="text-2xl font-display font-bold text-primary">
+                  R$ {item.price.toFixed(2)}
+                </span>
               </div>
               <button
-                className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-semibold transition-all ${
                   item.isAvailable
-                    ? "bg-green-100 text-green-700 hover:bg-green-200"
-                    : "bg-red-100 text-red-700 hover:bg-red-200"
+                    ? "bg-primary/10 text-primary hover:bg-primary/20"
+                    : "bg-red-50 text-red-600 hover:bg-red-100"
                 }`}
               >
-                {item.isAvailable ? "Disponível" : "Indisponível"}
+                {item.isAvailable ? (
+                  <>
+                    <Check className="w-4 h-4" />
+                    Disponível
+                  </>
+                ) : (
+                  <>
+                    <X className="w-4 h-4" />
+                    Indisponível
+                  </>
+                )}
               </button>
             </div>
-          </div>
+          </motion.div>
         ))}
       </div>
 
       {filteredItems.length === 0 && (
-        <div className="text-center py-12">
-          <UtensilsCrossed className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-          <p className="text-slate-600">Nenhum item encontrado nesta categoria</p>
-        </div>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="card-premium p-12 text-center"
+        >
+          <div className="w-20 h-20 bg-muted rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <UtensilsCrossed className="w-10 h-10 text-muted-foreground" />
+          </div>
+          <h3 className="text-xl font-display font-semibold text-foreground mb-2">Nenhum item encontrado</h3>
+          <p className="text-muted-foreground">Nenhum item encontrado nesta categoria</p>
+        </motion.div>
       )}
     </div>
   );
