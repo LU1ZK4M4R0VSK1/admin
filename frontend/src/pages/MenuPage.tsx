@@ -62,7 +62,7 @@ export default function MenuPage() {
                 <ArrowLeft className="w-5 h-5 text-muted-foreground" />
               </Link>
               <div>
-                <h1 className="text-xl font-display font-bold text-foreground">Aero Comidas</h1>
+                <h1 className="text-xl font-display font-bold text-foreground">Choose</h1>
                 <p className="text-sm text-muted-foreground">Mesa {tableId}</p>
               </div>
             </div>

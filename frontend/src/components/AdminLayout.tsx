@@ -57,7 +57,7 @@ export function AdminLayout() {
                 className="flex items-center gap-3"
               >
                 <div className="w-10 h-10 bg-gradient-primary rounded-xl flex items-center justify-center shadow-glow">
-                  <span className="text-primary-foreground font-bold text-lg">A</span>
+                  <span className="text-primary-foreground font-bold text-lg">C</span>
                 </div>
                 <div>
                   <span className="font-display font-bold text-sidebar-foreground">Aero Comidas</span>
@@ -72,7 +72,7 @@ export function AdminLayout() {
                 exit={{ opacity: 0 }}
                 className="w-10 h-10 bg-gradient-primary rounded-xl flex items-center justify-center shadow-glow mx-auto"
               >
-                <span className="text-primary-foreground font-bold text-lg">A</span>
+                <span className="text-primary-foreground font-bold text-lg">C</span>
               </motion.div>
             )}
           </AnimatePresence>
@@ -168,10 +168,10 @@ export function AdminLayout() {
               <div className="h-16 border-b border-sidebar-border flex items-center justify-between px-4">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-gradient-primary rounded-xl flex items-center justify-center shadow-glow">
-                    <span className="text-primary-foreground font-bold text-lg">A</span>
+                    <span className="text-primary-foreground font-bold text-lg">C</span>
                   </div>
                   <div>
-                    <span className="font-display font-bold text-sidebar-foreground">Aero Comidas</span>
+                    <span className="font-display font-bold text-sidebar-foreground">Choose</span>
                     <p className="text-xs text-sidebar-foreground/60">Painel Admin</p>
                   </div>
                 </div>

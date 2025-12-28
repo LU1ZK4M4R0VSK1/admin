@@ -11,9 +11,9 @@ export default function Index() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-gradient-primary rounded-xl flex items-center justify-center shadow-glow">
-                <span className="text-primary-foreground font-bold text-lg">A</span>
+                <span className="text-primary-foreground font-bold text-lg">C</span>
               </div>
-              <span className="font-display font-bold text-foreground text-xl">Aero Comidas</span>
+              <span className="font-display font-bold text-foreground text-xl">Choose</span>
             </div>
             <Link
               to="/admin"
@@ -41,7 +41,7 @@ export default function Index() {
             </div>
             
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-display font-bold text-foreground mb-6 leading-tight">
-              Aero Comidas
+              Choose
             </h1>
             <p className="text-xl text-muted-foreground mb-10 max-w-2xl mx-auto">
               Sistema de gestão de restaurante com análise de dados em tempo real
@@ -170,15 +170,18 @@ export default function Index() {
       {/* Footer */}
       <footer className="py-8 px-4 border-t border-border">
         <div className="container mx-auto">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex flex-col items-center justify-center gap-4">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-sm">A</span>
+                <span className="text-primary-foreground font-bold text-sm">C</span>
               </div>
-              <span className="font-display font-semibold text-foreground">Aero Comidas</span>
+              <span className="font-display font-semibold text-foreground">Choose</span>
             </div>
+            <p className="text-center text-muted-foreground font-medium">
+              Clareza para decidir. Inteligência para crescer
+            </p>
             <p className="text-sm text-muted-foreground">
-              © 2024 Aero Comidas. Todos os direitos reservados.
+              © 2025 Choose. Todos os direitos reservados.
             </p>
           </div>
         </div>
