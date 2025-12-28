@@ -33,15 +33,13 @@ logs/
 .env.local
 .env.*.local
 
-# Database
-*.db
+# Database (arquivos temporários do SQLite)
 *.db-shm
 *.db-wal
 
 # Backend específico
 backend/bin/
 backend/obj/
-backend/*.db
 backend/appsettings.Development.json
 
 # Frontend específico
